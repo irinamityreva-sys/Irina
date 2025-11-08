@@ -1,1 +1,899 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабиринт с монстрами</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #e94560;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0f3460;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #a9a9a9;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e94560;
+        }
+        
+        .game-screen {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background-color: #0f3460;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .movement-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(15, 52, 96, 0.7);
+            border: 2px solid #e94560;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(233, 69, 96, 0.3);
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .forward {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        .left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        
+        .backward {
+            grid-column: 2;
+            grid-row: 3;
+        }
+        
+        .right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+        
+        .action-btn {
+            padding: 12px 30px;
+            background: #e94560;
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+            width: 200px;
+            text-align: center;
+        }
+        
+        .action-btn:hover {
+            background: #ff6b81;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            width: 100%;
+            border: 1px solid #0f3460;
+        }
+        
+        .instructions h3 {
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 25, 47, 0.9);
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .screen h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #e94560;
+        }
+        
+        .screen p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            max-width: 600px;
+            line-height: 1.5;
+        }
+        
+        .monster {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #e94560;
+            border-radius: 50%;
+            z-index: 5;
+            transition: transform 0.3s;
+        }
+        
+        .monster::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #000;
+            border-radius: 50%;
+            top: 8px;
+            left: 6px;
+        }
+        
+        .monster::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #000;
+            border-radius: 50%;
+            top: 8px;
+            right: 6px;
+        }
+        
+        .player {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #4ecca3;
+            border-radius: 50%;
+            z-index: 10;
+        }
+        
+        .exit {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: gold;
+            border-radius: 5px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        @media (max-width: 600px) {
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .control-btn {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .game-screen {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>Лабиринт с Монстрами</h1>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-item">
+                <div class="info-label">Уровень</div>
+                <div class="info-value" id="level">1</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Время</div>
+                <div class="info-value" id="time">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Монстры</div>
+                <div class="info-value" id="monsters">3</div>
+            </div>
+        </div>
+        
+        <div class="game-screen">
+            <canvas id="mazeCanvas"></canvas>
+            <div id="startScreen" class="screen">
+                <h2>Лабиринт с Монстрами</h2>
+                <p>Пройдите 10 уровней лабиринта, убегая от монстров. Используйте клавиши WASD или кнопки управления для перемещения. Найдите выход до того, как монстры поймают вас!</p>
+                <button class="action-btn" id="startBtn">Начать игру</button>
+            </div>
+            
+            <div id="levelCompleteScreen" class="screen hidden">
+                <h2>Уровень пройден!</h2>
+                <p>Вы успешно прошли уровень <span id="completedLevel">1</span>!</p>
+                <button class="action-btn" id="nextLevelBtn">Следующий уровень</button>
+            </div>
+            
+            <div id="gameOverScreen" class="screen hidden">
+                <h2>Игра окончена!</h2>
+                <p>Монстры поймали вас на уровне <span id="failedLevel">1</span>.</p>
+                <button class="action-btn" id="restartBtn">Играть снова</button>
+            </div>
+            
+            <div id="winScreen" class="screen hidden">
+                <h2>Поздравляем!</h2>
+                <p>Вы прошли все 10 уровней лабиринта и победили!</p>
+                <button class="action-btn" id="winRestartBtn">Играть снова</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="movement-controls">
+                <button class="control-btn forward" id="upBtn">↑</button>
+                <button class="control-btn left" id="leftBtn">←</button>
+                <button class="control-btn backward" id="downBtn">↓</button>
+                <button class="control-btn right" id="rightBtn">→</button>
+            </div>
+            
+            <button class="action-btn" id="pauseBtn">Пауза</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>Управление:</h3>
+            <p>• Используйте WASD или стрелки на экране для перемещения</p>
+            <p>• Избегайте монстров - они будут преследовать вас</p>
+            <p>• Найдите золотой квадрат - это выход с уровня</p>
+            <p>• С каждым уровнем лабиринт становится сложнее, а монстры - быстрее</p>
+        </div>
+    </div>
+
+    <script>
+        // Основные переменные игры
+        let canvas, ctx;
+        let player = { x: 1, y: 1 };
+        let exit = { x: 0, y: 0 };
+        let monsters = [];
+        let maze = [];
+        let level = 1;
+        let gameTime = 0;
+        let timerInterval;
+        let gameRunning = false;
+        let gamePaused = false;
+        let cellSize = 40;
+        let playerDirection = 0; // 0: вверх, 1: право, 2: низ, 3: лево
+        let playerSpeed = 0.1;
+        let playerMoveProgress = 0;
+        let isMoving = false;
+        let moveQueue = [];
+        
+        // Размеры лабиринта
+        const mazeWidth = 15;
+        const mazeHeight = 15;
+        
+        // Элементы интерфейса
+        const levelElement = document.getElementById('level');
+        const timeElement = document.getElementById('time');
+        const monstersElement = document.getElementById('monsters');
+        const startScreen = document.getElementById('startScreen');
+        const levelCompleteScreen = document.getElementById('levelCompleteScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const winScreen = document.getElementById('winScreen');
+        const startBtn = document.getElementById('startBtn');
+        const nextLevelBtn = document.getElementById('nextLevelBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const winRestartBtn = document.getElementById('winRestartBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const completedLevel = document.getElementById('completedLevel');
+        const failedLevel = document.getElementById('failedLevel');
+        
+        // Кнопки управления
+        const upBtn = document.getElementById('upBtn');
+        const downBtn = document.getElementById('downBtn');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        
+        // Инициализация игры
+        function init() {
+            canvas = document.getElementById('mazeCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Установка размеров canvas
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Обработчики событий
+            startBtn.addEventListener('click', startGame);
+            nextLevelBtn.addEventListener('click', nextLevel);
+            restartBtn.addEventListener('click', restartGame);
+            winRestartBtn.addEventListener('click', restartGame);
+            pauseBtn.addEventListener('click', togglePause);
+            
+            // Обработчики кнопок управления
+            upBtn.addEventListener('click', () => movePlayer(0));
+            rightBtn.addEventListener('click', () => movePlayer(1));
+            downBtn.addEventListener('click', () => movePlayer(2));
+            leftBtn.addEventListener('click', () => movePlayer(3));
+            
+            // Обработчики клавиатуры
+            document.addEventListener('keydown', handleKeyDown);
+            
+            // Запуск игрового цикла
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Генерация лабиринта
+        function generateMaze() {
+            // Инициализация лабиринта (все стены)
+            maze = Array(mazeHeight).fill().map(() => Array(mazeWidth).fill(1));
+            
+            // Рекурсивное разделение для генерации лабиринта
+            divide(1, 1, mazeWidth-2, mazeHeight-2);
+            
+            // Установка начальной позиции игрока
+            player.x = 1;
+            player.y = 1;
+            maze[player.y][player.x] = 0;
+            
+            // Установка выхода в противоположном углу
+            exit.x = mazeWidth - 2;
+            exit.y = mazeHeight - 2;
+            maze[exit.y][exit.x] = 0;
+            
+            // Создание монстров
+            createMonsters();
+        }
+        
+        // Алгоритм рекурсивного разделения для генерации лабиринта
+        function divide(x, y, width, height) {
+            if (width < 3 || height < 3) return;
+            
+            // Выбор ориентации (вертикальная или горизонтальная)
+            const horizontal = Math.random() > 0.5;
+            
+            if (horizontal) {
+                // Горизонтальная стена
+                const wallY = y + Math.floor(Math.random() * (height - 2)) + 1;
+                
+                // Проход в стене
+                const passageX = x + Math.floor(Math.random() * width);
+                
+                for (let i = x; i < x + width; i++) {
+                    if (i !== passageX) {
+                        maze[wallY][i] = 1;
+                    }
+                }
+                
+                // Рекурсивные вызовы для верхней и нижней частей
+                divide(x, y, width, wallY - y);
+                divide(x, wallY + 1, width, y + height - wallY - 1);
+            } else {
+                // Вертикальная стена
+                const wallX = x + Math.floor(Math.random() * (width - 2)) + 1;
+                
+                // Проход в стене
+                const passageY = y + Math.floor(Math.random() * height);
+                
+                for (let i = y; i < y + height; i++) {
+                    if (i !== passageY) {
+                        maze[i][wallX] = 1;
+                    }
+                }
+                
+                // Рекурсивные вызовы для левой и правой частей
+                divide(x, y, wallX - x, height);
+                divide(wallX + 1, y, x + width - wallX - 1, height);
+            }
+        }
+        
+        // Создание монстров
+        function createMonsters() {
+            monsters = [];
+            const monsterCount = Math.min(2 + level, 8); // Увеличиваем количество монстров с уровнем
+            
+            for (let i = 0; i < monsterCount; i++) {
+                let x, y;
+                
+                // Ищем случайную позицию, не слишком близко к игроку
+                do {
+                    x = Math.floor(Math.random() * (mazeWidth - 2)) + 1;
+                    y = Math.floor(Math.random() * (mazeHeight - 2)) + 1;
+                } while (maze[y][x] === 1 || 
+                        (Math.abs(x - player.x) < 3 && Math.abs(y - player.y) < 3));
+                
+                monsters.push({
+                    x: x,
+                    y: y,
+                    speed: 0.05 + (level * 0.01), // Увеличиваем скорость с уровнем
+                    moveProgress: 0,
+                    direction: Math.floor(Math.random() * 4)
+                });
+            }
+            
+            monstersElement.textContent = monsterCount;
+        }
+        
+        // Отрисовка лабиринта
+        function drawMaze() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Расчет смещения для центрирования лабиринта
+            const offsetX = (canvas.width - mazeWidth * cellSize) / 2;
+            const offsetY = (canvas.height - mazeHeight * cellSize) / 2;
+            
+            // Отрисовка стен
+            ctx.fillStyle = '#0f3460';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#1a1a2e';
+            for (let y = 0; y < mazeHeight; y++) {
+                for (let x = 0; x < mazeWidth; x++) {
+                    if (maze[y][x] === 1) {
+                        ctx.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+            
+            // Отрисовка выхода
+            ctx.fillStyle = 'gold';
+            ctx.fillRect(offsetX + exit.x * cellSize, offsetY + exit.y * cellSize, cellSize, cellSize);
+            ctx.fillStyle = '#000';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('В', offsetX + exit.x * cellSize + cellSize/2, offsetY + exit.y * cellSize + cellSize/2);
+            
+            // Отрисовка игрока
+            const playerScreenX = offsetX + player.x * cellSize + cellSize/2;
+            const playerScreenY = offsetY + player.y * cellSize + cellSize/2;
+            
+            ctx.fillStyle = '#4ecca3';
+            ctx.beginPath();
+            ctx.arc(playerScreenX, playerScreenY, cellSize/3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Отрисовка направления игрока
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(playerScreenX, playerScreenY);
+            
+            const directionX = Math.sin(playerDirection * Math.PI / 2);
+            const directionY = -Math.cos(playerDirection * Math.PI / 2);
+            
+            ctx.lineTo(
+                playerScreenX + directionX * cellSize/2,
+                playerScreenY + directionY * cellSize/2
+            );
+            ctx.stroke();
+            
+            // Отрисовка монстров
+            monsters.forEach(monster => {
+                const monsterScreenX = offsetX + monster.x * cellSize + cellSize/2;
+                const monsterScreenY = offsetY + monster.y * cellSize + cellSize/2;
+                
+                ctx.fillStyle = '#e94560';
+                ctx.beginPath();
+                ctx.arc(monsterScreenX, monsterScreenY, cellSize/2.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Глаза монстра
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(monsterScreenX - cellSize/6, monsterScreenY - cellSize/6, cellSize/8, 0, Math.PI * 2);
+                ctx.arc(monsterScreenX + cellSize/6, monsterScreenY - cellSize/6, cellSize/8, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        // Движение игрока
+        function movePlayer(direction) {
+            if (!gameRunning || gamePaused || isMoving) return;
+            
+            playerDirection = direction;
+            moveQueue.push(direction);
+        }
+        
+        // Обработка движения игрока
+        function processPlayerMovement() {
+            if (moveQueue.length === 0 || isMoving) return;
+            
+            const direction = moveQueue.shift();
+            playerDirection = direction;
+            
+            let newX = player.x;
+            let newY = player.y;
+            
+            switch (direction) {
+                case 0: // Вверх
+                    newY--;
+                    break;
+                case 1: // Вправо
+                    newX++;
+                    break;
+                case 2: // Вниз
+                    newY++;
+                    break;
+                case 3: // Влево
+                    newX--;
+                    break;
+            }
+            
+            // Проверка, можно ли двигаться в выбранном направлении
+            if (newX >= 0 && newX < mazeWidth && newY >= 0 && newY < mazeHeight && maze[newY][newX] === 0) {
+                isMoving = true;
+                playerMoveProgress = 0;
+            }
+        }
+        
+        // Обновление позиции игрока
+        function updatePlayerPosition() {
+            if (!isMoving) return;
+            
+            playerMoveProgress += playerSpeed;
+            
+            if (playerMoveProgress >= 1) {
+                // Завершение движения
+                switch (playerDirection) {
+                    case 0: // Вверх
+                        player.y--;
+                        break;
+                    case 1: // Вправо
+                        player.x++;
+                        break;
+                    case 2: // Вниз
+                        player.y++;
+                        break;
+                    case 3: // Влево
+                        player.x--;
+                        break;
+                }
+                
+                isMoving = false;
+                
+                // Проверка достижения выхода
+                if (player.x === exit.x && player.y === exit.y) {
+                    completeLevel();
+                }
+                
+                // Проверка столкновения с монстрами
+                checkMonsterCollision();
+            }
+        }
+        
+        // Движение монстров
+        function moveMonsters() {
+            monsters.forEach(monster => {
+                if (monster.moveProgress > 0) {
+                    monster.moveProgress += monster.speed;
+                    
+                    if (monster.moveProgress >= 1) {
+                        // Завершение движения монстра
+                        switch (monster.direction) {
+                            case 0: // Вверх
+                                monster.y--;
+                                break;
+                            case 1: // Вправо
+                                monster.x++;
+                                break;
+                            case 2: // Вниз
+                                monster.y++;
+                                break;
+                            case 3: // Влево
+                                monster.x--;
+                                break;
+                        }
+                        
+                        monster.moveProgress = 0;
+                        
+                        // Проверка столкновения с игроком
+                        checkMonsterCollision();
+                    }
+                } else {
+                    // Выбор нового направления для монстра
+                    const directions = [];
+                    
+                    // Проверка возможных направлений
+                    if (monster.y > 0 && maze[monster.y-1][monster.x] === 0) directions.push(0); // Вверх
+                    if (monster.x < mazeWidth-1 && maze[monster.y][monster.x+1] === 0) directions.push(1); // Вправо
+                    if (monster.y < mazeHeight-1 && maze[monster.y+1][monster.x] === 0) directions.push(2); // Вниз
+                    if (monster.x > 0 && maze[monster.y][monster.x-1] === 0) directions.push(3); // Влево
+                    
+                    if (directions.length > 0) {
+                        // С вероятностью 70% монстр движется к игроку
+                        if (Math.random() < 0.7) {
+                            // Находим направление, приближающее к игроку
+                            let bestDirection = monster.direction;
+                            let minDistance = Infinity;
+                            
+                            directions.forEach(dir => {
+                                let testX = monster.x;
+                                let testY = monster.y;
+                                
+                                switch (dir) {
+                                    case 0: testY--; break;
+                                    case 1: testX++; break;
+                                    case 2: testY++; break;
+                                    case 3: testX--; break;
+                                }
+                                
+                                const distance = Math.abs(testX - player.x) + Math.abs(testY - player.y);
+                                
+                                if (distance < minDistance) {
+                                    minDistance = distance;
+                                    bestDirection = dir;
+                                }
+                            });
+                            
+                            monster.direction = bestDirection;
+                        } else {
+                            // Случайное направление
+                            monster.direction = directions[Math.floor(Math.random() * directions.length)];
+                        }
+                        
+                        monster.moveProgress = 0.001; // Начинаем движение
+                    }
+                }
+            });
+        }
+        
+        // Проверка столкновения с монстрами
+        function checkMonsterCollision() {
+            for (const monster of monsters) {
+                if (monster.x === player.x && monster.y === player.y) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+        
+        // Обработка нажатия клавиш
+        function handleKeyDown(e) {
+            if (!gameRunning || gamePaused) return;
+            
+            switch (e.key) {
+                case 'w':
+                case 'ArrowUp':
+                    movePlayer(0);
+                    break;
+                case 'd':
+                case 'ArrowRight':
+                    movePlayer(1);
+                    break;
+                case 's':
+                case 'ArrowDown':
+                    movePlayer(2);
+                    break;
+                case 'a':
+                case 'ArrowLeft':
+                    movePlayer(3);
+                    break;
+            }
+        }
+        
+        // Запуск игры
+        function startGame() {
+            startScreen.classList.add('hidden');
+            gameRunning = true;
+            gamePaused = false;
+            level = 1;
+            gameTime = 0;
+            levelElement.textContent = level;
+            timeElement.textContent = gameTime;
+            
+            generateMaze();
+            startTimer();
+        }
+        
+        // Завершение уровня
+        function completeLevel() {
+            if (level >= 10) {
+                // Победа в игре
+                winGame();
+            } else {
+                // Переход на следующий уровень
+                gameRunning = false;
+                clearInterval(timerInterval);
+                completedLevel.textContent = level;
+                levelCompleteScreen.classList.remove('hidden');
+            }
+        }
+        
+        // Следующий уровень
+        function nextLevel() {
+            levelCompleteScreen.classList.add('hidden');
+            gameRunning = true;
+            level++;
+            levelElement.textContent = level;
+            
+            // Увеличиваем сложность
+            cellSize = Math.max(25, 40 - level); // Уменьшаем размер клетки для большего лабиринта на экране
+            
+            generateMaze();
+            startTimer();
+        }
+        
+        // Конец игры
+        function gameOver() {
+            gameRunning = false;
+            clearInterval(timerInterval);
+            failedLevel.textContent = level;
+            gameOverScreen.classList.remove('hidden');
+        }
+        
+        // Победа в игре
+        function winGame() {
+            gameRunning = false;
+            clearInterval(timerInterval);
+            winScreen.classList.remove('hidden');
+        }
+        
+        // Перезапуск игры
+        function restartGame() {
+            levelCompleteScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            
+            startGame();
+        }
+        
+        // Пауза/продолжение игры
+        function togglePause() {
+            if (!gameRunning) return;
+            
+            gamePaused = !gamePaused;
+            pauseBtn.textContent = gamePaused ? 'Продолжить' : 'Пауза';
+            
+            if (gamePaused) {
+                clearInterval(timerInterval);
+            } else {
+                startTimer();
+            }
+        }
+        
+        // Запуск таймера
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!gamePaused) {
+                    gameTime++;
+                    timeElement.textContent = gameTime;
+                }
+            }, 1000);
+        }
+        
+        // Игровой цикл
+        function gameLoop() {
+            if (gameRunning && !gamePaused) {
+                processPlayerMovement();
+                updatePlayerPosition();
+                moveMonsters();
+                drawMaze();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Запуск игры при загрузке страницы
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
 
